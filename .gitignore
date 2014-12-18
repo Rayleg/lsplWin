@@ -1,0 +1,6 @@
+*.autosave
+*.user
+*.user.*
+*.dll
+*.so
+*.txt
