@@ -11,6 +11,7 @@
 #include <QTextStream>
 #include <QTableWidget>
 #include <QMainWindow>
+#include <QInputDialog>
 
 #include <lspl/Namespace.h>
 #include <lspl/patterns/PatternBuilder.h>
@@ -30,6 +31,73 @@
 
 #include <sys/stat.h>
 
+//using lspl::text::attributes::AttributeKey;
+
+std::string getAttrString( lspl::text::MatchRef m ) {
+    lspl::text::attributes::AttributeKey attributes[13] = {
+        lspl::text::attributes::AttributeKey::CASE,
+        lspl::text::attributes::AttributeKey::NUMBER,
+        lspl::text::attributes::AttributeKey::GENDER,
+        lspl::text::attributes::AttributeKey::DOC,
+        lspl::text::attributes::AttributeKey::TENSE,
+        lspl::text::attributes::AttributeKey::ANIMATE,
+        lspl::text::attributes::AttributeKey::FORM,
+        lspl::text::attributes::AttributeKey::MODE,
+        lspl::text::attributes::AttributeKey::PERSON,
+        lspl::text::attributes::AttributeKey::REFLEXIVE,
+        lspl::text::attributes::AttributeKey::STEM,
+        lspl::text::attributes::AttributeKey::BASE,
+        lspl::text::attributes::AttributeKey::TEXT
+    };
+
+    std::string res("");
+    bool isFirst = true;
+    for (int i = 0; i < 13; i++) {
+        if (m->getAttribute(attributes[i]) != lspl::text::attributes::AttributeValue::UNDEFINED) {
+            if (isFirst) {
+                isFirst = false;
+                res = m->getAttribute(attributes[i]).getString();
+            }
+            else
+               res += "," + m->getAttribute(attributes[i]).getString();
+        }
+    }
+    return res;
+}
+
+std::string getAttrString2( lspl::text::MatchRef m ) {
+
+
+    std::string res;
+    res =
+    //cout << "Case attr: " <<
+        m->getAttribute(lspl::text::attributes::AttributeKey::CASE).getString() + "," +
+    //cout << "Number attr: " <<
+        m->getAttribute(lspl::text::attributes::AttributeKey::NUMBER).getString() + "," +
+    //cout << "Gender attr: " <<
+        m->getAttribute(lspl::text::attributes::AttributeKey::GENDER).getString() + "," +
+    //cout << "Doc attr: " <<
+        m->getAttribute(lspl::text::attributes::AttributeKey::DOC).getString() + "," +
+    //cout << "Tense attr: " <<
+        m->getAttribute(lspl::text::attributes::AttributeKey::TENSE).getString() + "," +
+    //cout << "Animate attr: " <<
+        m->getAttribute(lspl::text::attributes::AttributeKey::ANIMATE).getString() + "," +
+    //cout << "Form attr: " <<
+        m->getAttribute(lspl::text::attributes::AttributeKey::FORM).getString() + "," +
+    //cout << "Mode attr: " <<
+        m->getAttribute(lspl::text::attributes::AttributeKey::MODE).getString() + "," +
+    //cout << "Person attr: " <<
+        m->getAttribute(lspl::text::attributes::AttributeKey::PERSON).getString() + "," +
+    //cout << "Reflexive attr: " <<
+        m->getAttribute(lspl::text::attributes::AttributeKey::REFLEXIVE).getString() + "," +
+    //cout << "Stem attr: " <<
+        m->getAttribute(lspl::text::attributes::AttributeKey::STEM).getString() + "," +
+    //cout << "Base attr: " <<
+        m->getAttribute(lspl::text::attributes::AttributeKey::BASE).getString() + "," +
+    //cout << "Text attr: " <<
+        m->getAttribute(lspl::text::attributes::AttributeKey::TEXT).getString();
+    return res;
+}
 
 MainWindow::MainWindow(QWidget *parent) :
     QMainWindow(parent),
@@ -41,12 +109,12 @@ MainWindow::MainWindow(QWidget *parent) :
     connect(ui->loadText, SIGNAL(triggered()), this, SLOT(loadText()));
     connect(ui->loadTemplate, SIGNAL(triggered()), this, SLOT(loadTemplate()));
     connect(ui->tableMatch, SIGNAL(cellClicked(int,int)), this, SLOT(showMatches(int,int)));
-    ui->pbAddTemplate->setVisible(false);
+    //ui->pbAddTemplate->setVisible(false);
 
     // LSPL initializing
 
     // Create namespace for everything
-    lsplNS = new lspl::Namespace(); // SIGSEGV received here
+    lsplNS = new lspl::Namespace();
     // Define builder in namespace ns
     lsplPatternBuilder = new lspl::patterns::PatternBuilder(lsplNS);
 }
@@ -54,11 +122,32 @@ MainWindow::MainWindow(QWidget *parent) :
 /* On the push button 'Add template' slot */
 void MainWindow::addTemplate() {
     qDebug() << "add template slot";
+    bool isOk;
+    QString pattern = QInputDialog::getText(this, "Input pattern", "Pattern:", QLineEdit::Normal, "", &isOk);
+    if (!isOk)
+        return;
+    try {
+        lspl::patterns::PatternBuilder::BuildInfo info = lsplPatternBuilder->build(pattern.toStdString());
+
+        if ( info.parseTail.length() != 0 ) {
+            std::cout << "Error during parsing '" << pattern.toStdString() << "': '" << info.parseTail << "' not parsed" << std::endl;
+        }
+        else
+            ui->listTemplate->addItem(pattern);
+    }
+    catch (lspl::patterns::PatternBuildingException ex) {
+        QString error_content(pattern);
+
+        error_content.append(QString(":\n"));
+        error_content.append(QString(ex.what()));
+        QMessageBox::warning(0, "Wrong pattern", error_content, QMessageBox::Ok);
+    }
 }
 
 /* Load template file function (on 'load template' menu item slot) */
 void MainWindow::loadTemplate() {
     // Clear old data: TODO
+    // Test for test
     //lsplNS->
 
     qDebug() << "load template slot";
@@ -79,14 +168,18 @@ void MainWindow::loadTemplate() {
     while (!ts.atEnd()) {
         temp = ts.readLine();
         try {
-            lsplPatternBuilder->build(temp.toStdString());
+            lspl::patterns::PatternBuilder::BuildInfo info = lsplPatternBuilder->build(temp.toStdString());
+
+            if ( info.parseTail.length() != 0 ) {
+                std::cout << "Error during parsing '" << temp.toStdString() << "': '" << info.parseTail << "' not parsed" << std::endl;
+            }
         }
         catch (lspl::patterns::PatternBuildingException ex) {
             QString error_content(temp);
 
             error_content.append(QString(":\n"));
             error_content.append(QString(ex.what()));
-            QMessageBox::warning(0, "Wrong pattern", temp, QMessageBox::Ok);
+            QMessageBox::warning(0, "Wrong pattern", error_content, QMessageBox::Ok);
         }
         ui->listTemplate->addItem(temp);
     }
@@ -103,29 +196,73 @@ void MainWindow::applyTemplates() {\
 
     QTableWidget *tbl = ui->tableMatch;
 
-    int cc = lsplNS->getPatternCount();
-    tbl->setRowCount(cc);
-    QString m("");
-    lspl::text::MatchList matches;
-    // Fill table
-    for (int i = 0; i < cc; i++) {
-        lspl::patterns::PatternRef pattern = lsplNS->getPatternByIndex(i);
-        tbl->setItem(i, 0, new QTableWidgetItem(QString::fromStdString(pattern->getName())));
-        matches = lsplText->getMatches(pattern);
+    // Clear table
+    int n = tbl->rowCount();
+    for (int i = 0; i < n; i++)
+        tbl->removeRow(0);
 
+    lspl::text::MatchList matches;
+    int rowCount = 0;
+    int patternCount = lsplNS->getPatternCount();
+    // Calculate number of rows
+    for (int i = 0; i < patternCount; i++) {
+        lspl::patterns::PatternRef pattern = lsplNS->getPatternByIndex(i);
+        matches = lsplText->getMatches(pattern);
         // For each match
-        tbl->setItem(i, 1, new QTableWidgetItem(QString::fromStdString(pattern->getSource())));
-        m = QString("");
         for (lspl::text::MatchList::iterator match_iter = matches.begin();
              match_iter != matches.end();
              ++match_iter) {
             lspl::text::MatchConstRef match = *match_iter;
-            //lspl::text::MatchVariantConstRef mv = *match_iter;
+            rowCount += match->getVariantCount();
+        }
+    }
+
+    tbl->setRowCount(rowCount);
+
+    // Fill table
+    int patternRowIndex = 0, matchRowIndex = 0, transRowIndex = 0;
+    for (int i = 0; i < patternCount; i++) {
+        lspl::patterns::PatternRef pattern = lsplNS->getPatternByIndex(i);
+        tbl->setItem(patternRowIndex, 0, new QTableWidgetItem(QString::fromStdString(pattern->getName())));
+        matches = lsplText->getMatches(pattern);
+
+        // For each match
+        tbl->setItem(patternRowIndex, 1, new QTableWidgetItem(QString::fromStdString(pattern->getSource())));
+        matchRowIndex = patternRowIndex;
+        for (lspl::text::MatchList::iterator match_iter = matches.begin();
+             match_iter != matches.end();
+             ++match_iter) {
+            lspl::text::MatchRef match = *match_iter;
 
             QString mstr = codec->toUnicode(match->getRangeString().c_str());
-            m += mstr + QString(", ");
+            tbl->setItem(matchRowIndex, 2, new QTableWidgetItem(mstr));
+            //match->
+            transRowIndex = matchRowIndex;
+            uint varCount = match->getVariantCount();
+            for (uint varIdx = 0; varIdx < varCount; ++varIdx) {
+                try {
+                    tbl->setItem(transRowIndex, 3,
+                                 new QTableWidgetItem(
+                                     codec->toUnicode(
+                                         getAttrString(match).c_str())));
+                    if (match->getVariant(varIdx)->alternative.hasTransform())
+                        tbl->setItem(transRowIndex, 4,
+                                     new QTableWidgetItem(
+                                         QString::fromStdString(
+                                             match->getVariant(varIdx)->getTransformResult<std::string>())));
+                    else
+                        tbl->setItem(transRowIndex, 4,
+                                     new QTableWidgetItem(
+                                         QString("No transform for variant")));
+                } catch (lspl::base::Exception ex) {
+                    std::cout << ex.what() << std::endl;
+                }
+                transRowIndex++;
+
+            }
+            matchRowIndex += varCount;
         }
-        tbl->setItem(i, 2, new QTableWidgetItem(m));
+        patternRowIndex = matchRowIndex;
     }
 }
 
@@ -151,19 +288,20 @@ void MainWindow::loadText() {
 
 /* Show all matches in the text for appropriate template (by row) */
 void MainWindow::showMatches( int row, int ) {
-    QTextEdit::ExtraSelection es;
-    QList<QTextEdit::ExtraSelection> ls;
-    QTextCursor cursor = ui->textEdit->textCursor();
-    cursor.clearSelection();
-    ui->textEdit->setTextCursor(cursor);
-    for (int i = 0; i < templates[row].matches.size(); i++) {
-        es.format.setBackground(QBrush(Qt::yellow));
-        es.cursor = ui->textEdit->textCursor();
-        es.cursor.setPosition(templates[row].matches[i].start);
-        es.cursor.movePosition(QTextCursor::Right, QTextCursor::KeepAnchor, templates[row].matches[i].finish - templates[row].matches[i].start);
-        ls.append(es);
-    }
-    ui->textEdit->setExtraSelections(ls);
+    row = row;
+//    QTextEdit::ExtraSelection es;
+//    QList<QTextEdit::ExtraSelection> ls;
+//    QTextCursor cursor = ui->textEdit->textCursor();
+//    cursor.clearSelection();
+//    ui->textEdit->setTextCursor(cursor);
+//    for (int i = 0; i < templates[row].matches.size(); i++) {
+//        es.format.setBackground(QBrush(Qt::yellow));
+//        es.cursor = ui->textEdit->textCursor();
+//        es.cursor.setPosition(templates[row].matches[i].start);
+//        es.cursor.movePosition(QTextCursor::Right, QTextCursor::KeepAnchor, templates[row].matches[i].finish - templates[row].matches[i].start);
+//        ls.append(es);
+//    }
+//    ui->textEdit->setExtraSelections(ls);
 }
 
 
