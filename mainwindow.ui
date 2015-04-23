@@ -33,7 +33,7 @@ p, li { white-space: pre-wrap; }
 &lt;p style=&quot;-qt-paragraph-type:empty; margin-top:0px; margin-bottom:0px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px; font-family:'MS Shell Dlg 2'; font-size:8pt;&quot;&gt;&lt;br /&gt;&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
         </property>
        </widget>
-       <widget class="QWidget" name="">
+       <widget class="QWidget" name="layoutWidget">
         <layout class="QGridLayout" name="gridLayout_3">
          <item row="1" column="0">
           <widget class="QPushButton" name="pbAddTemplate">
@@ -117,7 +117,14 @@ p, li { white-space: pre-wrap; }
     <addaction name="loadText"/>
     <addaction name="loadTemplate"/>
    </widget>
+   <widget class="QMenu" name="menuOmonim">
+    <property name="title">
+     <string>Омонимы</string>
+    </property>
+    <addaction name="showOmonims"/>
+   </widget>
    <addaction name="menu"/>
+   <addaction name="menuOmonim"/>
   </widget>
   <widget class="QToolBar" name="mainToolBar">
    <attribute name="toolBarArea">
@@ -135,6 +142,11 @@ p, li { white-space: pre-wrap; }
   <action name="loadTemplate">
    <property name="text">
     <string>Загрузить шаблоны</string>
+   </property>
+  </action>
+  <action name="showOmonims">
+   <property name="text">
+    <string>Показать омонимы</string>
    </property>
   </action>
  </widget>

@@ -34,6 +34,8 @@ private:
     lspl::NamespaceRef lsplNS;
     lspl::patterns::PatternBuilderRef lsplPatternBuilder;
     lspl::text::TextRef lsplText;
+
+    void getTextFromView();
 public:
     explicit MainWindow(QWidget *parent = 0);
     ~MainWindow();
@@ -44,6 +46,7 @@ private slots:
     void loadText();
     void applyTemplates();
     void showMatches( int row, int col );
+    void showOmonims();
 };
 
 #endif // MAINWINDOW_H

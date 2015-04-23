@@ -1,5 +1,7 @@
 #include "mainwindow.h"
+#include "omonimdialog.h"
 #include "ui_mainwindow.h"
+
 
 #include <QtCore/QCoreApplication>
 #include <QtCore>
@@ -109,6 +111,7 @@ MainWindow::MainWindow(QWidget *parent) :
     connect(ui->loadText, SIGNAL(triggered()), this, SLOT(loadText()));
     connect(ui->loadTemplate, SIGNAL(triggered()), this, SLOT(loadTemplate()));
     connect(ui->tableMatch, SIGNAL(cellClicked(int,int)), this, SLOT(showMatches(int,int)));
+    connect(ui->showOmonims, SIGNAL(triggered()), this, SLOT(showOmonims()));
     //ui->pbAddTemplate->setVisible(false);
 
     // LSPL initializing
@@ -117,6 +120,15 @@ MainWindow::MainWindow(QWidget *parent) :
     lsplNS = new lspl::Namespace();
     // Define builder in namespace ns
     lsplPatternBuilder = new lspl::patterns::PatternBuilder(lsplNS);
+}
+
+void MainWindow::showOmonims() {
+    std::cout << "show omonims slot" << std::endl;
+    OmonimDialog * dialog = new OmonimDialog();
+
+    getTextFromView();
+    dialog->setData(lsplText->getWords());
+    dialog->exec();
 }
 
 /* On the push button 'Add template' slot */
@@ -186,12 +198,16 @@ void MainWindow::loadTemplate() {
     tempfile.close();
 }
 
-void MainWindow::applyTemplates() {\
-    // Get text from field
+void MainWindow::getTextFromView() {
     lspl::text::readers::PlainTextReader reader;
     QTextCodec *codec = QTextCodec::codecForName("CP1251");
     QByteArray ba = codec->fromUnicode(ui->textEdit->toPlainText());
     lsplText = reader.readFromString(ba.constData());
+}
+
+void MainWindow::applyTemplates() {\
+    // Get text from field
+    getTextFromView();
     //QMessageBox::about(0, "Text content", QString::fromStdString(lsplText->getContent()));
 
     QTableWidget *tbl = ui->tableMatch;
@@ -233,6 +249,8 @@ void MainWindow::applyTemplates() {\
              match_iter != matches.end();
              ++match_iter) {
             lspl::text::MatchRef match = *match_iter;
+
+            QTextCodec *codec = QTextCodec::codecForName("CP1251");
 
             QString mstr = codec->toUnicode(match->getRangeString().c_str());
             tbl->setItem(matchRowIndex, 2, new QTableWidgetItem(mstr));

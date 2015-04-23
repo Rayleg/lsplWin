@@ -26,8 +26,11 @@ LIBS += -llspl
 
 SOURCES += main.cpp \
         mainwindow.cpp \
-    stat.cpp
+    stat.cpp \
+    omonimdialog.cpp
 
-HEADERS  += mainwindow.h
+HEADERS  += mainwindow.h \
+    omonimdialog.h
 
-FORMS    += mainwindow.ui
+FORMS    += mainwindow.ui \
+    omonimdialog.ui
