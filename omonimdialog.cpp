@@ -32,12 +32,10 @@ OmonimTableModel::NodeInfoList::iterator OmonimTableModel::findWord( NodeInfoLis
     return iter;
 }
 
-
 void OmonimTableModel::setDataa( const lspl::text::markup::WordList &wordList ) {
-    for (int i = 0; i < wordList.size(); i++) {
-        NodeInfo newWord;
+    for (int i = 0; i < (int)wordList.size(); i++) {
+        NodeInfo newWord(wordList[i]);
 
-        newWord.word = wordList[i];
         NodeInfoList::iterator position = findWord(rootNodes, newWord);
         if (position == rootNodes.end()) {
             newWord.parent = 0;
@@ -116,6 +114,7 @@ int OmonimTableModel::rowCount(const QModelIndex &parent) const {
 
 }
 int OmonimTableModel::columnCount(const QModelIndex &parent) const {
+    Q_UNUSED(parent);
     return ColumnCount;
 }
 QVariant OmonimTableModel::data(const QModelIndex &index, int role) const {
@@ -124,17 +123,15 @@ QVariant OmonimTableModel::data(const QModelIndex &index, int role) const {
     }
 
     if (role == Qt::DisplayRole) {
-        QTextCodec *codec = QTextCodec::codecForName("CP1251");
         const NodeInfo* nodeInfo = static_cast<NodeInfo*>(index.internalPointer());
-        const lspl::text::markup::WordRef word = nodeInfo->word;
 
         switch (index.column()) {
         case NameColumn:
-            return codec->toUnicode(word->getRangeString().c_str());
+            return nodeInfo->wordStr;
         case AttribColumn:
             if (nodeInfo->parent == 0)
                 return QVariant();
-            return codec->toUnicode((word->getAttributesString() + std::string(",") + word->getSpeechPart().getAbbrevation()).c_str());
+            return nodeInfo->attrib;
         default:
             break;
         }
@@ -142,13 +139,12 @@ QVariant OmonimTableModel::data(const QModelIndex &index, int role) const {
     return QVariant();
 }
 
-bool OmonimTableModel::canFetchMore(const QModelIndex &parent) const {
-    if (!parent.isValid())
-        return false;
-    return true;
-}
-void OmonimTableModel::fetchMore(const QModelIndex &parent) {
-
+QVariant OmonimTableModel::headerData(int section, Qt::Orientation orientation, int role) const {
+    QStringList headers = {"Слово", "Атрибуты"};
+    if (orientation == Qt::Horizontal && role == Qt::DisplayRole && section < headers.size()) {
+        return headers[section];
+    }
+    return QVariant();
 }
 
 OmonimDialog::~OmonimDialog()

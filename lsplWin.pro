@@ -27,10 +27,12 @@ LIBS += -llspl
 SOURCES += main.cpp \
         mainwindow.cpp \
     stat.cpp \
-    omonimdialog.cpp
+    omonimdialog.cpp \
+    matchtablemodel.cpp
 
 HEADERS  += mainwindow.h \
-    omonimdialog.h
+    omonimdialog.h \
+    matchtablemodel.h
 
 FORMS    += mainwindow.ui \
     omonimdialog.ui

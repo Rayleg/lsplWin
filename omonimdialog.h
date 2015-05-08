@@ -2,8 +2,10 @@
 #define OMONIMDIALOG_H
 
 #include <lspl/text/Match.h>
+#include <lspl/text/markup/Word.h>
 
 #include <QDialog>
+#include <QTextCodec>
 #include <QAbstractTableModel>
 
 namespace Ui {
@@ -24,8 +26,16 @@ public:
     class NodeInfo {
     public:
         lspl::text::markup::WordRef word;
+        QString wordStr, attrib;
         NodeInfo *parent;
         QVector<NodeInfo> children;
+        NodeInfo(lspl::text::markup::WordRef w = 0, NodeInfo *p = 0) : word(w), parent(p) {
+            QTextCodec *codec = QTextCodec::codecForName("CP1251");
+
+            wordStr = codec->toUnicode(w->getRangeString().c_str());
+            attrib = codec->toUnicode((w->getAttributesString() + std::string(",") + word->getSpeechPart().getAbbrevation()).c_str());
+        }
+
         bool operator==(const NodeInfo &ni) const {
             return word == ni.word;
         }
@@ -43,9 +53,7 @@ public:
     virtual int rowCount(const QModelIndex &parent = QModelIndex()) const;
     virtual int columnCount(const QModelIndex &parent = QModelIndex()) const;
     virtual QVariant data(const QModelIndex &index, int role = Qt::DisplayRole) const;
-
-    bool canFetchMore(const QModelIndex &parent) const;
-    void fetchMore(const QModelIndex &parent);
+    virtual QVariant headerData(int section, Qt::Orientation orientation, int role) const;
 
     ~OmonimTableModel();
 private:

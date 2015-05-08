@@ -55,7 +55,7 @@ p, li { white-space: pre-wrap; }
         </layout>
        </widget>
       </widget>
-      <widget class="QTableWidget" name="tableMatch">
+      <widget class="QTreeView" name="tableMatch">
        <property name="sizePolicy">
         <sizepolicy hsizetype="Expanding" vsizetype="Expanding">
          <horstretch>0</horstretch>
@@ -71,31 +71,6 @@ p, li { white-space: pre-wrap; }
        <property name="editTriggers">
         <set>QAbstractItemView::NoEditTriggers</set>
        </property>
-       <column>
-        <property name="text">
-         <string>Имя шаблона</string>
-        </property>
-       </column>
-       <column>
-        <property name="text">
-         <string>Определение</string>
-        </property>
-       </column>
-       <column>
-        <property name="text">
-         <string>Сопоставления</string>
-        </property>
-       </column>
-       <column>
-        <property name="text">
-         <string>Свойства</string>
-        </property>
-       </column>
-       <column>
-        <property name="text">
-         <string>Извлечение</string>
-        </property>
-       </column>
       </widget>
      </widget>
     </item>
@@ -116,6 +91,7 @@ p, li { white-space: pre-wrap; }
     </property>
     <addaction name="loadText"/>
     <addaction name="loadTemplate"/>
+    <addaction name="saveText"/>
    </widget>
    <widget class="QMenu" name="menuOmonim">
     <property name="title">
@@ -123,8 +99,16 @@ p, li { white-space: pre-wrap; }
     </property>
     <addaction name="showOmonims"/>
    </widget>
+   <widget class="QMenu" name="menuStat">
+    <property name="title">
+     <string>Статистика</string>
+    </property>
+    <addaction name="saveStatistic"/>
+    <addaction name="textInfo"/>
+   </widget>
    <addaction name="menu"/>
    <addaction name="menuOmonim"/>
+   <addaction name="menuStat"/>
   </widget>
   <widget class="QToolBar" name="mainToolBar">
    <attribute name="toolBarArea">
@@ -147,6 +131,21 @@ p, li { white-space: pre-wrap; }
   <action name="showOmonims">
    <property name="text">
     <string>Показать омонимы</string>
+   </property>
+  </action>
+  <action name="saveStatistic">
+   <property name="text">
+    <string>Сохранить данные</string>
+   </property>
+  </action>
+  <action name="saveText">
+   <property name="text">
+    <string>Сохранить текст</string>
+   </property>
+  </action>
+  <action name="textInfo">
+   <property name="text">
+    <string>Информация о тексте</string>
    </property>
   </action>
  </widget>

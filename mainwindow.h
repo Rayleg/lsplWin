@@ -20,6 +20,7 @@
 #include <lspl/transforms/TextTransform.h>
 #include <lspl/morphology/Morphology.h>
 
+#include "matchtablemodel.h"
 
 namespace Ui {
 class MainWindow;
@@ -32,8 +33,9 @@ class MainWindow : public QMainWindow
 private:
     Ui::MainWindow *ui;
     lspl::NamespaceRef lsplNS;
-    lspl::patterns::PatternBuilderRef lsplPatternBuilder;
+    lspl::patterns::PatternBuilderRef lsplPatternBuilder, lsplPatternBuilderTransform;
     lspl::text::TextRef lsplText;
+    MatchTableModel matchTableModel;
 
     void getTextFromView();
 public:
@@ -47,6 +49,12 @@ private slots:
     void applyTemplates();
     void showMatches( int row, int col );
     void showOmonims();
+    void saveData();
+    void savePatterns();
+    void saveText();
+    void textInfo();
+private:
+    void addPattern( const QString &pattern );
 };
 
 #endif // MAINWINDOW_H
