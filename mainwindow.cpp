@@ -37,82 +37,91 @@
 //using lspl::text::attributes::AttributeKey;
 
 
+/* The main window representation class constructor.
+ * Attach handler for controlls items.
+ * Initialize lspl objects.
+ */
 MainWindow::MainWindow(QWidget *parent) :
     QMainWindow(parent),
     ui(new Ui::MainWindow)
 {
     ui->setupUi(this);
+    // Attach slots for signals for interface buttons
     connect(ui->pbAddTemplate, SIGNAL(clicked()), this, SLOT(addTemplate()));
     connect(ui->pbApplyTemplate, SIGNAL(clicked()), this, SLOT(applyTemplates()));
     connect(ui->loadText, SIGNAL(triggered()), this, SLOT(loadText()));
     connect(ui->loadTemplate, SIGNAL(triggered()), this, SLOT(loadTemplate()));
-    //connect(ui->tableMatch, SIGNAL(cellClicked(int,int)), this, SLOT(showMatches(int,int)));
     connect(ui->showOmonims, SIGNAL(triggered()), this, SLOT(showOmonims()));
     connect(ui->saveStatistic, SIGNAL(triggered()), this, SLOT(saveData()));
     connect(ui->saveText, SIGNAL(triggered()), this, SLOT(saveText()));
     connect(ui->textInfo, SIGNAL(triggered()), this, SLOT(textInfo()));
 
     ui->tableMatch->setModel(&matchTableModel);
+
     // LSPL initializing
 
-    // Create namespace for everything
+    // Create lspl namespace (storage for patterns)
     lsplNS = new lspl::Namespace();
-    // Define builder in namespace ns
-    //lsplPatternBuilder = new lspl::patterns::PatternBuilder(lsplNS); // It is not using
+    // Define pattern builder
     lsplPatternBuilderTransform = new lspl::patterns::PatternBuilder(lsplNS, new lspl::transforms::TextTransformBuilder(lsplNS));
 }
 
+/* Create dialog with omonims list function */
 void MainWindow::showOmonims() {
-    std::cout << "show omonims slot" << std::endl;
+    qDebug() << "show omonims slot\n";
     OmonimDialog * dialog = new OmonimDialog();
 
+    // Get last version of text
     getTextFromView();
+    // Set data for view
     dialog->setData(lsplText->getWords());
+    // Run dialog window
     dialog->exec();
 }
 
+// Add pattern by text definition to system function */
 void MainWindow::addPattern( const QString &pattern ) {
     QTextCodec * codec = QTextCodec::codecForName("CP1251");
-    QTextDecoder * decoder = codec->makeDecoder();
     lspl::patterns::PatternBuilder::BuildInfo info;
+
     try {
+        // Try to build pattern
         info = lsplPatternBuilderTransform->build(std::string(codec->fromUnicode(pattern).constData()));
     }
     catch (lspl::patterns::PatternBuildingException ex) {
+        // Catch exception (Pattern may be added to system)
         QString error_content(pattern);
 
         error_content.append(QString(":\n"));
         error_content.append(QString(ex.what()));
-        //QMessageBox::warning(0, "Wrong pattern", error_content, QMessageBox::Ok);
-        std::cout << error_content.toStdString() << std::endl;
+        qDebug() << error_content.toStdString().c_str() << "\n";
     }
-    if ( info.parseTail.length() != 0 ) {
+    // Analyze pattern parsing
+    if (info.parseTail.length() != 0) {
         qDebug() << "Error during parsing '" << codec->toUnicode(pattern.toStdString().c_str()) << "': '" << info.parseTail.c_str() << "' not parsed\n";
     }
     else
+        // Show pattern in list if success
         ui->listTemplate->addItem(pattern); // pattern vs codec->toUnicode(pattern.toStdString().c_str())
-    delete decoder;
 }
 
-/* On the push button 'Add template' slot */
+/* Add pattern from interface form function */
 void MainWindow::addTemplate() {
     qDebug() << "add template slot";
-    QTextCodec *codec = QTextCodec::codecForName("CP1251");
     bool isOk;
+
+    // Get text definition of pattern from dialog
     QString pattern = QInputDialog::getText(this, "Input pattern", "Pattern:", QLineEdit::Normal, "", &isOk);
     if (!isOk)
         return;
+    // Add pattern to system
     addPattern(pattern);
-
-    qDebug() << codec->toUnicode(codec->fromUnicode(pattern).constData()) << "\n";
 }
 
-/* Load template file function (on 'load template' menu item slot) */
+/* Load patterns from file function */
 void MainWindow::loadTemplate() {
-    // Clear old data: TODO (no interface for clear data in lspl-library)
-    // ...
-\
-    qDebug() << "load template slot";
+    qDebug() << "load template slot\n";
+    // Get file name for loading
     QString filename = QFileDialog::getOpenFileName(this, QString("Open template file"));
     if (filename == "")
         return;
@@ -131,7 +140,7 @@ void MainWindow::loadTemplate() {
     tempfile.close();
 }
 
-/* Get text from edit view and load it to inner presentation */
+/* Get text from edit view and load it to inner representation */
 void MainWindow::getTextFromView() {
     lspl::text::readers::PlainTextReader reader;
     QTextCodec *codec = QTextCodec::codecForName("CP1251");
@@ -172,27 +181,10 @@ void MainWindow::loadText() {
     text.close();
 }
 
-/* Show all matches in the text for appropriate template (by row) */
-void MainWindow::showMatches( int row, int ) {
-    row = row;
-//    QTextEdit::ExtraSelection es;
-//    QList<QTextEdit::ExtraSelection> ls;
-//    QTextCursor cursor = ui->textEdit->textCursor();
-//    cursor.clearSelection();
-//    ui->textEdit->setTextCursor(cursor);
-//    for (int i = 0; i < templates[row].matches.size(); i++) {
-//        es.format.setBackground(QBrush(Qt::yellow));
-//        es.cursor = ui->textEdit->textCursor();
-//        es.cursor.setPosition(templates[row].matches[i].start);
-//        es.cursor.movePosition(QTextCursor::Right, QTextCursor::KeepAnchor, templates[row].matches[i].finish - templates[row].matches[i].start);
-//        ls.append(es);
-//    }
-//    ui->textEdit->setExtraSelections(ls);
-}
-
 /* Save statistic about pattern matching */
 void MainWindow::saveData() {
     qDebug() << "save data slot";
+    // Get save file name from dialog
     QString filename = QFileDialog::getSaveFileName(this, QString("Save data file"));
     if (filename == "")
         return;
@@ -207,14 +199,16 @@ void MainWindow::saveData() {
     lspl::text::MatchList matches;
     int start = -1, end = -1, dif = 0;
 
+    // For each patterns in system save statistic
     for (int i = 0; i < patternCount; i++) {
         lspl::patterns::PatternRef pattern = lsplNS->getPatternByIndex(i);
         ts << pattern->getName().c_str() << " = " << pattern->getSource().c_str() << ":" << "\n";
         // For each match add it to the tree to parent pattern
-        if (!lsplText)
+        if (!lsplText) // No text in system
             continue;
         matches = lsplText->getMatches(pattern);
         ts << "all matches: " << matches.size() << "\n";
+        // Count no crossing matches
         dif = 0;
         for (int i = 0; i < (int)matches.size(); i++) {
             // Using order of matches during test
@@ -275,7 +269,7 @@ void MainWindow::savePatterns() {
     text.close();
 }
 
-
+/* Show info about text (Number of words in text) */
 void MainWindow::textInfo() {
     getTextFromView();
     int wordNum = 0;

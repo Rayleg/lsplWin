@@ -12,6 +12,7 @@
 
 std::string getAttrString( lspl::text::MatchRef m );
 
+/* Match table model class */
 class MatchTableModel : public QAbstractItemModel
 {
     Q_OBJECT
@@ -29,11 +30,12 @@ public:
         ColumnCount // число столбцов
     };
 
+    // Node of tree table class
     class NodeInfo {
     public:
-        NodeInfo *parent;
-        QVector<NodeInfo *> children;
-        int parentColumn;
+        NodeInfo *parent;             // reference to parent foe cell
+        QVector<NodeInfo *> children; // children list
+        int parentColumn;             // Number of parent column
 
         NodeInfo( NodeInfo * prnt = 0, int parentCol = RamificationColumn) : parent(prnt), parentColumn(parentCol) {}
         virtual QVariant getView(int col)  const;
@@ -45,6 +47,8 @@ public:
         }
         virtual ~NodeInfo() {}
     };
+    // Types of cells
+    // Node for pattern describing
     class PatternNode : public NodeInfo {
         lspl::patterns::PatternRef pattern;
         QString name, definition;
@@ -57,6 +61,7 @@ public:
         }
         virtual QVariant getView(int col) const;
     };
+    // Node for match describing
     class MatchNode : public NodeInfo {
         lspl::text::MatchRef match;
         QString matchstr, attributes;
@@ -69,6 +74,7 @@ public:
         }
         virtual QVariant getView(int col) const;
     };
+    // Node for variant (transform of patterns) describing
     class VariantNode : public NodeInfo {
         lspl::text::MatchVariantRef variant;
         QString extraction;
@@ -83,19 +89,28 @@ public:
 
     typedef QVector<NodeInfo *> NodeInfoList;
 
+
+    /* Set data for table */
     void setNewData( const lspl::NamespaceRef &ns, const lspl::text::TextRef text );
+    /* Get index for cell by coordinations and parent function */
     virtual QModelIndex index(int row, int column, const QModelIndex &parent) const;
+    /* Get parent for cell function */
     virtual QModelIndex parent(const QModelIndex &child) const;
+    /* Get number of rows in table function */
     virtual int rowCount(const QModelIndex &parent = QModelIndex()) const;
+    /* Get number of columns in table function */
     virtual int columnCount(const QModelIndex &parent = QModelIndex()) const;
+    /* Get data (data for show in cell) for cell by index function */
     virtual QVariant data(const QModelIndex &index, int role = Qt::DisplayRole) const;
+    /* Get header name for colums by colums number function */
     virtual QVariant headerData(int section, Qt::Orientation orientation, int role) const;
+    /* Clear memory of data tree */
     void clear();
     ~MatchTableModel();
 private:
-    NodeInfoList::iterator findWord( NodeInfoList& nodeList, NodeInfo &node );
+    /* Get row of node from parent function */
     int findRow(const NodeInfo *nodeInfo) const;
-    NodeInfoList rootNodes; // список корневых узлов
+    NodeInfoList rootNodes; // root nodes list
 };
 
 #endif // MATCHTABLEMODEL_H

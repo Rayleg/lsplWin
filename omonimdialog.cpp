@@ -11,16 +11,19 @@ OmonimDialog::OmonimDialog(QWidget *parent) :
     ui(new Ui::OmonimDialog)
 {
     ui->setupUi(this);
+    // Set model for dialog
     ui->treeView->setModel(&tableModel);
 }
+/* Set data for show function */
 void OmonimDialog::setData( const lspl::text::markup::WordList &wordList ) {
-    tableModel.setDataa(wordList);
+    tableModel.setNewData(wordList);
 }
 
 OmonimTableModel::OmonimTableModel(QObject *parent) : QAbstractItemModel(parent) {
 }
 OmonimTableModel::~OmonimTableModel(){
 }
+/* Find word in word list function */
 OmonimTableModel::NodeInfoList::iterator OmonimTableModel::findWord( NodeInfoList& nodeList, NodeInfo &node ) {
     NodeInfoList::iterator iter = nodeList.begin();
 
@@ -32,7 +35,9 @@ OmonimTableModel::NodeInfoList::iterator OmonimTableModel::findWord( NodeInfoLis
     return iter;
 }
 
-void OmonimTableModel::setDataa( const lspl::text::markup::WordList &wordList ) {
+/* Set data for table function */
+void OmonimTableModel::setNewData( const lspl::text::markup::WordList &wordList ) {
+    // Build word tree
     for (int i = 0; i < (int)wordList.size(); i++) {
         NodeInfo newWord(wordList[i]);
 
@@ -50,6 +55,7 @@ void OmonimTableModel::setDataa( const lspl::text::markup::WordList &wordList ) 
             }
         }
     }
+    // Remove similar words
     QVector<int> removeList;
     for (int i = 0; i < rootNodes.size(); i++) {
         if (rootNodes[i].children.size() <= 1)
@@ -70,7 +76,7 @@ void OmonimTableModel::setDataa( const lspl::text::markup::WordList &wordList ) 
     }
 
 }
-
+/* Get index for cell by coordinations and parent function */
 QModelIndex OmonimTableModel::index(int row, int column, const QModelIndex &parent) const {
     if (!hasIndex(row, column, parent)) {
         return QModelIndex();
@@ -83,6 +89,7 @@ QModelIndex OmonimTableModel::index(int row, int column, const QModelIndex &pare
     NodeInfo* parentInfo = static_cast<NodeInfo*>(parent.internalPointer());
     return createIndex(row, column, &parentInfo->children[row]);
 }
+/* Get parent for cell function */
 QModelIndex OmonimTableModel::parent(const QModelIndex &child) const {
     if (!child.isValid()) {
         return QModelIndex();
@@ -98,14 +105,15 @@ QModelIndex OmonimTableModel::parent(const QModelIndex &child) const {
     }
 
 }
+/* Get row of node from parent function */
 int OmonimTableModel::findRow(const NodeInfo *nodeInfo) const
 {
     const NodeInfoList& parentInfoChildren = nodeInfo->parent != 0 ? nodeInfo->parent->children: rootNodes;
     NodeInfoList::const_iterator position = qFind(parentInfoChildren.begin(), parentInfoChildren.end(), *nodeInfo);
     return std::distance(parentInfoChildren.begin(), position);
 }
+/* Get number of rows in table function */
 int OmonimTableModel::rowCount(const QModelIndex &parent) const {
-    //return 15;
     if (!parent.isValid()) {
         return rootNodes.size();
     }
@@ -113,10 +121,12 @@ int OmonimTableModel::rowCount(const QModelIndex &parent) const {
     return parentInfo->children.size();
 
 }
+/* Get number of columns in table function */
 int OmonimTableModel::columnCount(const QModelIndex &parent) const {
     Q_UNUSED(parent);
     return ColumnCount;
 }
+/* Get data (data for show in cell) for cell by index function */
 QVariant OmonimTableModel::data(const QModelIndex &index, int role) const {
     if (!index.isValid()) {
         return QVariant();
@@ -139,6 +149,7 @@ QVariant OmonimTableModel::data(const QModelIndex &index, int role) const {
     return QVariant();
 }
 
+/* Get header name for colums by colums number function */
 QVariant OmonimTableModel::headerData(int section, Qt::Orientation orientation, int role) const {
     QStringList headers = {"Слово", "Атрибуты"};
     if (orientation == Qt::Horizontal && role == Qt::DisplayRole && section < headers.size()) {
@@ -147,7 +158,6 @@ QVariant OmonimTableModel::headerData(int section, Qt::Orientation orientation, 
     return QVariant();
 }
 
-OmonimDialog::~OmonimDialog()
-{
+OmonimDialog::~OmonimDialog() {
     delete ui;
 }

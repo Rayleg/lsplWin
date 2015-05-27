@@ -12,6 +12,7 @@ namespace Ui {
 class OmonimDialog;
 }
 
+// Omonim table model class */
 class OmonimTableModel : public QAbstractItemModel {
     Q_OBJECT
 
@@ -23,12 +24,14 @@ public:
         ColumnCount // число столбцов
     };
 
+    // Node of tree (cell in table) class
     class NodeInfo {
     public:
-        lspl::text::markup::WordRef word;
-        QString wordStr, attrib;
-        NodeInfo *parent;
-        QVector<NodeInfo> children;
+        lspl::text::markup::WordRef word; // reference for word
+        QString wordStr, attrib;          // word attributes
+        NodeInfo *parent;                 // reference to parent node
+        QVector<NodeInfo> children;       // children list
+
         NodeInfo(lspl::text::markup::WordRef w = 0, NodeInfo *p = 0) : word(w), parent(p) {
             QTextCodec *codec = QTextCodec::codecForName("CP1251");
 
@@ -47,19 +50,28 @@ public:
     typedef QVector<NodeInfo> NodeInfoList;
 
     explicit OmonimTableModel(QObject *parent = 0);
-    void setDataa( const lspl::text::markup::WordList &wordList );
+    /* Set data for table function */
+    void setNewData( const lspl::text::markup::WordList &wordList );
+    /* Get index for cell by coordinations and parent function */
     virtual QModelIndex index(int row, int column, const QModelIndex &parent) const;
+    /* Get parent for cell function */
     virtual QModelIndex parent(const QModelIndex &child) const;
+    /* Get number of rows in table function */
     virtual int rowCount(const QModelIndex &parent = QModelIndex()) const;
+    /* Get number of columns in table function */
     virtual int columnCount(const QModelIndex &parent = QModelIndex()) const;
+    /* Get data (data for show in cell) for cell by index function */
     virtual QVariant data(const QModelIndex &index, int role = Qt::DisplayRole) const;
+    /* Get header name for colums by colums number function */
     virtual QVariant headerData(int section, Qt::Orientation orientation, int role) const;
 
     ~OmonimTableModel();
 private:
+    /* Find word in word list function */
     NodeInfoList::iterator findWord( NodeInfoList& nodeList, NodeInfo &node );
+    /* Get row of node from parent function */
     int findRow(const NodeInfo *nodeInfo) const;
-    NodeInfoList rootNodes; // список корневых узлов
+    NodeInfoList rootNodes; // root nodes list
 };
 
 class OmonimDialog : public QDialog

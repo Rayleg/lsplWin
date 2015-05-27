@@ -8,6 +8,7 @@
 
 #include <iostream>
 
+/* Build string with attributes for match function */
 std::string getAttrString( lspl::text::MatchRef m ) {
     lspl::text::attributes::AttributeKey attributes[13] = {
         lspl::text::attributes::AttributeKey::CASE,
@@ -44,6 +45,7 @@ MatchTableModel::MatchTableModel(QObject *parent) :
     QAbstractItemModel(parent) {
 }
 
+/* Get index for cell by coordinations and parent function */
 QModelIndex MatchTableModel::index(int row, int column, const QModelIndex &parent) const {
     if (!hasIndex(row, column, parent)) {
         return QModelIndex();
@@ -56,6 +58,8 @@ QModelIndex MatchTableModel::index(int row, int column, const QModelIndex &paren
     NodeInfo* parentInfo = static_cast<NodeInfo*>(parent.internalPointer());
     return createIndex(row, column, parentInfo->children[row]);
 }
+
+/* Get parent for cell function */
 QModelIndex MatchTableModel::parent(const QModelIndex &child) const {
     if (!child.isValid()) {
         return QModelIndex();
@@ -64,7 +68,6 @@ QModelIndex MatchTableModel::parent(const QModelIndex &child) const {
     NodeInfo* childInfo = static_cast<NodeInfo*>(child.internalPointer());
     NodeInfo* parentInfo = childInfo->parent;
     if (parentInfo != 0) { // parent запрашивается не у корневого элемента
-        //return createIndex(findRow(parentInfo), RamificationColumn, parentInfo);
         return createIndex(findRow(parentInfo), parentInfo->parentColumn, parentInfo);
     }
     else {
@@ -72,12 +75,15 @@ QModelIndex MatchTableModel::parent(const QModelIndex &child) const {
     }
 
 }
+/* Get row of node from parent function */
 int MatchTableModel::findRow(const NodeInfo *nodeInfo) const
 {
     const NodeInfoList& parentInfoChildren = nodeInfo->parent != 0 ? nodeInfo->parent->children: rootNodes;
     NodeInfoList::const_iterator position = qFind(parentInfoChildren.begin(), parentInfoChildren.end(), nodeInfo);
     return std::distance(parentInfoChildren.begin(), position);
 }
+
+/* Get number of rows in table function */
 int MatchTableModel::rowCount(const QModelIndex &parent) const {
     //return 15;
     if (!parent.isValid()) {
@@ -87,11 +93,13 @@ int MatchTableModel::rowCount(const QModelIndex &parent) const {
     return parentInfo->children.size();
 
 }
+/* Get number of columns in table function */
 int MatchTableModel::columnCount(const QModelIndex &parent) const {
     Q_UNUSED(parent);
     return ColumnCount;
 }
 
+/* Set data for table */
 void MatchTableModel::setNewData( const lspl::NamespaceRef &ns, const lspl::text::TextRef text ) {
     // Clear old data
     clear();
@@ -126,6 +134,7 @@ void MatchTableModel::setNewData( const lspl::NamespaceRef &ns, const lspl::text
     }
 }
 
+/* Get header name for colums by colums number function */
 QVariant MatchTableModel::headerData(int section, Qt::Orientation orientation, int role) const {
     QStringList headers = {"Название", "Определение", "Сопоставление", "Атрибуты", "Извлечение" };
     if (orientation == Qt::Horizontal && role == Qt::DisplayRole && section < headers.size()) {
@@ -134,6 +143,7 @@ QVariant MatchTableModel::headerData(int section, Qt::Orientation orientation, i
     return QVariant();
 }
 
+/* Get data (data for show in cell) for cell by index function */
 QVariant MatchTableModel::data(const QModelIndex &index, int role) const {
     if (!index.isValid()) {
         return QVariant();
@@ -147,6 +157,7 @@ QVariant MatchTableModel::data(const QModelIndex &index, int role) const {
     return QVariant();
 }
 
+/* Default view behavior for general node */
 QVariant MatchTableModel::NodeInfo::getView(int col) const {
     switch (col) {
     case NameColumn:
@@ -165,47 +176,44 @@ QVariant MatchTableModel::NodeInfo::getView(int col) const {
     return QVariant();
 }
 
+/* Get view information for pattern node function */
 QVariant MatchTableModel::PatternNode::getView(int col)  const {
     switch (col) {
     case NameColumn:
         return name;
-        //return QString::fromStdString(pattern->getName());
     case DefinitionColumn:
         return definition;
-        //return QString::fromStdString(pattern->getSource());
     default:
         break;
     }
     return QVariant();
 }
+/* Get view information for match node function */
 QVariant MatchTableModel::MatchNode::getView(int col)  const {
     //QTextCodec *codec = QTextCodec::codecForName("CP1251");
 
     switch (col) {
     case MatchColumn:
         return matchstr;
-        //return codec->toUnicode(match->getRangeString().c_str());
     case AttribColumn:
         return attributes;
-        //return codec->toUnicode(getAttrString(match).c_str());
     default:
         break;
     }
     return QVariant();
 }
+/* Get view information for variant node function */
 QVariant MatchTableModel::VariantNode::getView(int col)  const {
-    //QTextCodec *codec = QTextCodec::codecForName("CP1251");
-
     switch (col) {
     case ExtractColumn:
         return extraction;
-        //return codec->toUnicode(variant->getTransformResult<std::string>().c_str());
     default:
         break;
     }
     return QVariant();
 }
 
+/* Clear memory of data tree */
 void MatchTableModel::clear() {
     for (int i = 0; i < rootNodes.size(); i++) {
         for (int j = 0; j < rootNodes[i]->children.size(); j++) {
@@ -219,5 +227,6 @@ void MatchTableModel::clear() {
 }
 
 MatchTableModel::~MatchTableModel() {
+    // Clear memory
     clear();
 }
